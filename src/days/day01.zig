@@ -17,7 +17,7 @@ fn subWrapping(value: u8, amount: u32) WrappingResult {
     const remainder = amount % 100;
     return .{
         .value = @intCast((value + 100 - remainder) % 100),
-        .wraps = amount / 100 + @intFromBool(remainder >= value),
+        .wraps = amount / 100 + @intFromBool(remainder >= value and value > 0),
     };
 }
 
@@ -55,24 +55,14 @@ pub fn part2(input: []const u8) !i64 {
         const num = try std.fmt.parseInt(u32, num_slice, 10);
         switch (direction) {
             'L' => {
-                std.debug.print("\nCurrent point: {d}", .{point});
-                std.debug.print("\nShifting left: {d}", .{num});
-                // TODO: Bug in the wrap substraction,
-                if (point == 0) {
-                    times -= 1;
-                }
                 const res = subWrapping(point, num);
                 point = res.value;
                 times += res.wraps;
-                std.debug.print("\nResult: {any}", .{res});
             },
             'R' => {
-                std.debug.print("\nCurrent point: {d}", .{point});
-                std.debug.print("\nShifting right: {d}", .{num});
                 const res = addWrapping(point, num);
                 point = res.value;
                 times += res.wraps;
-                std.debug.print("\nResult: {any}", .{res});
             },
             else => return error.InvalidInput,
         }

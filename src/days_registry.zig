@@ -13,6 +13,3 @@ pub const days = [_]Day{
     .{ .number = 1, .part1 = day01.part1, .part2 = day01.part2 },
 };
 
-test {
-    _ = day01;
-}

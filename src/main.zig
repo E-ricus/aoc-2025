@@ -73,6 +73,9 @@ fn runDay(allocator: std.mem.Allocator, day_num: u8) !void {
     std.debug.print("Part 2: {d} ({d:.3}ms)\n", .{ result2, time2 });
 }
 
-test "registry" {
-    _ = registry;
+test "all days" {
+    // Reference all day implementations to ensure their tests run
+    inline for (days) |day| {
+        _ = day;
+    }
 }

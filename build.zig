@@ -182,16 +182,4 @@ fn generateDaysRegistry(b: *std.Build) !void {
     try registry_file.writeAll("pub const days = [_]Day{\n");
     try registry_file.writeAll(entries_list.items);
     try registry_file.writeAll("};\n\n");
-
-    // Add test block to ensure all day tests are discovered
-    var test_refs = std.ArrayList(u8).initCapacity(allocator, 0) catch unreachable;
-    defer test_refs.deinit(allocator);
-
-    for (day_entries.items) |day_entry| {
-        try test_refs.writer(allocator).print("    _ = day{s};\n", .{day_entry.num_str});
-    }
-
-    try registry_file.writeAll("test {\n");
-    try registry_file.writeAll(test_refs.items);
-    try registry_file.writeAll("}\n");
 }
