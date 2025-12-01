@@ -1,12 +1,24 @@
 const std = @import("std");
 const aoc = @import("aoc");
 
-fn addWrapping(value: u8, amount: u32) u8 {
-    return @intCast((value + amount) % 100);
+const WrappingResult = struct {
+    value: u8,
+    wraps: u32,
+};
+
+fn addWrapping(value: u8, amount: u32) WrappingResult {
+    return .{
+        .value = @intCast((value + amount) % 100),
+        .wraps = (value + amount) / 100,
+    };
 }
 
-fn subWrapping(value: u8, amount: u32) u8 {
-    return @intCast((value + 100 - (amount % 100)) % 100);
+fn subWrapping(value: u8, amount: u32) WrappingResult {
+    const remainder = amount % 100;
+    return .{
+        .value = @intCast((value + 100 - remainder) % 100),
+        .wraps = amount / 100 + @intFromBool(remainder >= value),
+    };
 }
 
 pub fn part1(input: []const u8) !i64 {
@@ -19,10 +31,10 @@ pub fn part1(input: []const u8) !i64 {
         const num = try std.fmt.parseInt(u32, num_slice, 10);
         switch (direction) {
             'L' => {
-                point = subWrapping(point, num);
+                point = subWrapping(point, num).value;
             },
             'R' => {
-                point = addWrapping(point, num);
+                point = addWrapping(point, num).value;
             },
             else => return error.InvalidInput,
         }
@@ -34,9 +46,38 @@ pub fn part1(input: []const u8) !i64 {
 }
 
 pub fn part2(input: []const u8) !i64 {
-    _ = input;
-    // TODO: Implement part 2
-    return 0;
+    var point: u8 = 50;
+    var times: i64 = 0;
+    var lines = aoc.lines(input);
+    while (lines.next()) |line| {
+        const direction = line[0];
+        const num_slice = line[1..];
+        const num = try std.fmt.parseInt(u32, num_slice, 10);
+        switch (direction) {
+            'L' => {
+                std.debug.print("\nCurrent point: {d}", .{point});
+                std.debug.print("\nShifting left: {d}", .{num});
+                // TODO: Bug in the wrap substraction,
+                if (point == 0) {
+                    times -= 1;
+                }
+                const res = subWrapping(point, num);
+                point = res.value;
+                times += res.wraps;
+                std.debug.print("\nResult: {any}", .{res});
+            },
+            'R' => {
+                std.debug.print("\nCurrent point: {d}", .{point});
+                std.debug.print("\nShifting right: {d}", .{num});
+                const res = addWrapping(point, num);
+                point = res.value;
+                times += res.wraps;
+                std.debug.print("\nResult: {any}", .{res});
+            },
+            else => return error.InvalidInput,
+        }
+    }
+    return times;
 }
 
 test "day1 part1" {
@@ -69,5 +110,6 @@ test "day1 part2" {
         \\R14
         \\L82
     ;
-    try std.testing.expectEqual(@as(i64, 6), try part2(input));
+    const result = try part2(input);
+    try std.testing.expectEqual(@as(i64, 6), result);
 }
