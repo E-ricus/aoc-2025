@@ -70,7 +70,7 @@ pub fn fetchInput(allocator: std.mem.Allocator, day: u8) !void {
     std.debug.print("Fetching input for day {d}...\n", .{day});
 
     var url_buf: [64]u8 = undefined;
-    const url = try std.fmt.bufPrint(&url_buf, "https://adventofcode.com/2024/day/{d}/input", .{day});
+    const url = try std.fmt.bufPrint(&url_buf, "https://adventofcode.com/2025/day/{d}/input", .{day});
     const data = try fetchGet(allocator, url);
     defer allocator.free(data);
 
