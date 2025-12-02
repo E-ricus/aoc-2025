@@ -103,7 +103,9 @@ fn generateDaysRegistry(b: *std.Build) !void {
             // Create empty registry if directory doesn't exist
             const registry_file = try std.fs.cwd().createFile("src/days_registry.zig", .{});
             defer registry_file.close();
-            try registry_file.writeAll(
+            var buf: [4096]u8 = undefined;
+            var registry_writer = registry_file.writer(&buf);
+            try registry_writer.interface.writeAll(
                 \\// Auto-generated file - do not edit
                 \\pub const days = [_]Day{};
                 \\pub const Day = struct {
@@ -113,6 +115,7 @@ fn generateDaysRegistry(b: *std.Build) !void {
                 \\};
                 \\
             );
+            try registry_writer.interface.flush();
             return;
         }
         return err;
@@ -169,17 +172,21 @@ fn generateDaysRegistry(b: *std.Build) !void {
     // Generate the registry file
     const registry_file = try std.fs.cwd().createFile("src/days_registry.zig", .{});
     defer registry_file.close();
+    var buf: [4096]u8 = undefined;
+    var registry_writer = registry_file.writer(&buf);
+    const writer = &registry_writer.interface;
 
-    try registry_file.writeAll("// Auto-generated file - do not edit manually\n");
-    try registry_file.writeAll("// This file is regenerated on every build\n\n");
-    try registry_file.writeAll(imports.items);
-    try registry_file.writeAll("\n");
-    try registry_file.writeAll("pub const Day = struct {\n");
-    try registry_file.writeAll("    number: u8,\n");
-    try registry_file.writeAll("    part1: *const fn ([]const u8) anyerror!i64,\n");
-    try registry_file.writeAll("    part2: *const fn ([]const u8) anyerror!i64,\n");
-    try registry_file.writeAll("};\n\n");
-    try registry_file.writeAll("pub const days = [_]Day{\n");
-    try registry_file.writeAll(entries_list.items);
-    try registry_file.writeAll("};\n\n");
+    try writer.writeAll("// Auto-generated file - do not edit manually\n");
+    try writer.writeAll("// This file is regenerated on every build\n\n");
+    try writer.writeAll(imports.items);
+    try writer.writeAll("\n");
+    try writer.writeAll("pub const Day = struct {\n");
+    try writer.writeAll("    number: u8,\n");
+    try writer.writeAll("    part1: *const fn ([]const u8) anyerror!i64,\n");
+    try writer.writeAll("    part2: *const fn ([]const u8) anyerror!i64,\n");
+    try writer.writeAll("};\n\n");
+    try writer.writeAll("pub const days = [_]Day{\n");
+    try writer.writeAll(entries_list.items);
+    try writer.writeAll("};\n\n");
+    try writer.flush();
 }

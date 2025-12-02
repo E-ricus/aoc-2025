@@ -55,11 +55,8 @@ pub fn main() !void {
     };
 
     // Create day file
-    const filename = if (day < 10)
-        try std.fmt.allocPrint(allocator, "src/days/day0{d}.zig", .{day})
-    else
-        try std.fmt.allocPrint(allocator, "src/days/day{d}.zig", .{day});
-    defer allocator.free(filename);
+    var path_buf: [18]u8 = undefined;
+    const filename = try std.fmt.bufPrint(&path_buf, "src/days/day{d:02}.zig", .{day});
 
     // Check if file already exists
     if (std.fs.cwd().access(filename, .{})) {
@@ -73,7 +70,11 @@ pub fn main() !void {
     const content = try std.fmt.allocPrint(allocator, day_template, .{ day, day });
     defer allocator.free(content);
 
-    try file.writeAll(content);
+    var buf: [4096]u8 = undefined;
+    var writer = file.writer(&buf);
+
+    try writer.interface.writeAll(content);
+    try writer.interface.flush();
 
     std.debug.print("Created {s}\n", .{filename});
     try fetch.fetchInput(allocator, day);
@@ -81,5 +82,5 @@ pub fn main() !void {
     std.debug.print("\n1. Implement solution in {s}\n", .{filename});
     std.debug.print("\n2. Run solution:\n", .{});
     std.debug.print("   zig build run -- {d}\n", .{day});
-    std.debug.print("\nNote: The day will be automatically discovered on next build!\n", .{});
+    std.debug.print("\nNote: The day will be automatically discovered on next build\n", .{});
 }

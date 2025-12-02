@@ -2,11 +2,8 @@ const std = @import("std");
 
 /// Read the entire input file for a given day
 pub fn readInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
-    const path = if (day < 10)
-        try std.fmt.allocPrint(allocator, "inputs/day0{d}.txt", .{day})
-    else
-        try std.fmt.allocPrint(allocator, "inputs/day{d}.txt", .{day});
-    defer allocator.free(path);
+    var path_buf: [16]u8 = undefined;
+    const path = try std.fmt.bufPrint(&path_buf, "inputs/day{d:02}.txt", .{day});
 
     const file = std.fs.cwd().openFile(path, .{}) catch |err| {
         std.debug.print("Error: Could not open input file '{s}'\n", .{path});
@@ -15,8 +12,9 @@ pub fn readInput(allocator: std.mem.Allocator, day: u8) ![]const u8 {
     };
     defer file.close();
 
-    const max_size = 50 * 1024 * 1024; // 50MB max
-    return try file.readToEndAlloc(allocator, max_size);
+    var buf: [4096]u8 = undefined; // temporary read buffer
+    var reader: std.fs.File.Reader = file.reader(&buf);
+    return reader.interface.allocRemaining(allocator, .unlimited);
 }
 
 /// Iterator for lines in input
