@@ -50,11 +50,12 @@ fn runDay(allocator: std.mem.Allocator, day_num: u8) !void {
         return;
     }
 
-    const input = aoc.readInput(allocator, day_num) catch |err| {
+    const input_not_trimed = aoc.readInput(allocator, day_num) catch |err| {
         std.debug.print("Failed to read input for day {d}: {}\n", .{ day_num, err });
         return;
     };
-    defer allocator.free(input);
+    defer allocator.free(input_not_trimed);
+    const input = std.mem.trim(u8, input_not_trimed, "\n");
 
     std.debug.print("\n=== Day {d} ===\n", .{day_num});
 

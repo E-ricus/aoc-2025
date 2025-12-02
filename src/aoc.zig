@@ -102,6 +102,31 @@ pub fn Grid(comptime T: type) type {
     };
 }
 
+pub fn chunks(comptime T: type, slice: []const T, chunk_size: usize) ChunkIterator(T) {
+    return ChunkIterator(T){
+        .slice = slice,
+        .chunk_size = chunk_size,
+        .index = 0,
+    };
+}
+
+fn ChunkIterator(comptime T: type) type {
+    return struct {
+        slice: []const T,
+        chunk_size: usize,
+        index: usize,
+
+        pub fn next(self: *@This()) ?[]const T {
+            if (self.index >= self.slice.len) return null;
+
+            const end = @min(self.index + self.chunk_size, self.slice.len);
+            const chunk = self.slice[self.index..end];
+            self.index = end;
+            return chunk;
+        }
+    };
+}
+
 test "LineIterator" {
     const input = "line1\nline2\nline3";
     var iter = lines(input);
