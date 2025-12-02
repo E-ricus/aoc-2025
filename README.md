@@ -35,6 +35,9 @@ zig build run -- 5
 # Run multiple days
 zig build run -- 1 2 3
 
+# Run all days
+zig build run -- 1 2 3
+
 # Run with optimizations
 zig build run -Doptimize=ReleaseFast -- 5
 ```
@@ -53,7 +56,7 @@ zig build test
 ├── src/
 │   ├── main.zig           # Day runner
 │   ├── aoc.zig            # Shared utilities
-│   ├── days_registry.zig  # Auto-generated (don't edit!)
+│   ├── days_registry.zig  # Auto-generated
 │   └── days/
 │       ├── day01.zig      # Day 1 solution
 │       ├── day02.zig      # Day 2 solution

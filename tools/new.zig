@@ -77,7 +77,7 @@ pub fn main() !void {
     try writer.interface.flush();
 
     std.debug.print("Created {s}\n", .{filename});
-    try fetch.fetchInput(allocator, day);
+    try fetch.fetchInput(allocator, day, "2025");
     std.debug.print("\nNext steps:\n", .{});
     std.debug.print("\n1. Implement solution in {s}\n", .{filename});
     std.debug.print("\n2. Run solution:\n", .{});

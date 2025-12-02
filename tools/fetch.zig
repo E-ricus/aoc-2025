@@ -61,7 +61,7 @@ fn writeFile(path: []const u8, data: []const u8) !void {
     try writer.interface.flush();
 }
 
-pub fn fetchInput(allocator: std.mem.Allocator, day: u8) !void {
+pub fn fetchInput(allocator: std.mem.Allocator, day: u8, year: []const u8) !void {
     // Create inputs directory if it doesn't exist
     std.fs.cwd().makeDir("inputs") catch |err| {
         if (err != error.PathAlreadyExists) return err;
@@ -73,7 +73,7 @@ pub fn fetchInput(allocator: std.mem.Allocator, day: u8) !void {
     std.debug.print("Fetching input for day {d}...\n", .{day});
 
     var url_buf: [42]u8 = undefined;
-    const url = try std.fmt.bufPrint(&url_buf, "https://adventofcode.com/2025/day/{d}/input", .{day});
+    const url = try std.fmt.bufPrint(&url_buf, "https://adventofcode.com/{s}/day/{d}/input", .{ year, day });
     const data = try fetchGet(allocator, url);
     defer allocator.free(data);
 
@@ -93,9 +93,14 @@ pub fn main() !void {
     if (args.len < 2) {
         std.debug.print("Usage: {s} <day>\n", .{args[0]});
         std.debug.print("Example: zig build fetch -- 5\n", .{});
+        std.debug.print("Optionally send year, default to 2025: zig build fetch -- 5 2024\n", .{});
         return;
     }
 
+    var year: []const u8 = "2025";
+    if (args.len == 3) {
+        year = args[2];
+    }
     const day = try std.fmt.parseInt(u8, args[1], 10);
-    try fetchInput(allocator, day);
+    try fetchInput(allocator, day, year);
 }
