@@ -51,5 +51,5 @@ test "day3 part2" {
         \\234234234234278
         \\818181911112111
     ;
-    try std.testing.expectEqual(@as(i64, 0), try part2(input));
+    try std.testing.expectEqual(@as(i64, 3121910778619), try part2(input));
 }

@@ -1,6 +1,6 @@
 const std = @import("std");
 const aoc = @import("aoc");
-const registry = @import("days_registry");
+const registry = @import("days_registry.zig");
 
 const Day = registry.Day;
 const days = registry.days;

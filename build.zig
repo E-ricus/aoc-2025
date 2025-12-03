@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
     });
 
     // Generate days registry at build time
-    const registry_mod = generateDaysRegistry(b, target, optimize, aoc_mod) catch |err| {
+    generateDaysRegistry(b) catch |err| {
         std.debug.print("Failed to generate days registry: {}\n", .{err});
         @panic("days registry generation failed");
     };
@@ -26,7 +26,6 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "aoc", .module = aoc_mod },
-                .{ .name = "days_registry", .module = registry_mod },
             },
         }),
     });
@@ -87,7 +86,6 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "aoc", .module = aoc_mod },
-                .{ .name = "days_registry", .module = registry_mod },
             },
         }),
     });
@@ -103,23 +101,10 @@ const DayEntry = struct {
     filename: []const u8,
 };
 
-fn generateDaysRegistry(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    aoc_mod: *std.Build.Module,
-) !*std.Build.Module {
+fn generateDaysRegistry(b: *std.Build) !void {
     const allocator = b.allocator;
 
     // Collect day files
-    var days_dir = b.build_root.handle.openDir("src/days", .{ .iterate = true }) catch |err| {
-        if (err == error.FileNotFound) {
-            return try makeRegistryModule(b, target, optimize, aoc_mod, &[_]DayEntry{});
-        }
-        return err;
-    };
-    defer days_dir.close();
-
     var day_entries = std.ArrayListUnmanaged(DayEntry){};
     defer {
         for (day_entries.items) |d| {
@@ -128,6 +113,34 @@ fn generateDaysRegistry(
         }
         day_entries.deinit(allocator);
     }
+
+    var days_dir = b.build_root.handle.openDir("src/days", .{ .iterate = true }) catch |err| {
+        if (err == error.FileNotFound) {
+            // Generate empty registry
+            var file = try b.build_root.handle.createFile("src/days_registry.zig", .{ .truncate = true });
+            defer file.close();
+            var buf: [4096]u8 = undefined;
+            var writer = file.writer(&buf);
+            const w = &writer.interface;
+            try w.writeAll(
+                \\// Auto-generated file - do not edit manually
+                \\// Regenerated on every build
+                \\
+                \\pub const Day = struct {
+                \\    number: u8,
+                \\    part1: *const fn ([]const u8) anyerror!i64,
+                \\    part2: *const fn ([]const u8) anyerror!i64,
+                \\};
+                \\
+                \\pub const days = [_]Day{};
+                \\
+            );
+            try w.flush();
+            return;
+        }
+        return err;
+    };
+    defer days_dir.close();
 
     var it = days_dir.iterate();
     while (try it.next()) |entry| {
@@ -151,16 +164,7 @@ fn generateDaysRegistry(
         }
     }.lessThan);
 
-    return try makeRegistryModule(b, target, optimize, aoc_mod, day_entries.items);
-}
-
-fn makeRegistryModule(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    aoc_mod: *std.Build.Module,
-    day_entries: []const DayEntry,
-) !*std.Build.Module {
+    // Generate the registry file
     var file = try b.build_root.handle.createFile("src/days_registry.zig", .{ .truncate = true });
     defer file.close();
 
@@ -173,7 +177,7 @@ fn makeRegistryModule(
         \\// Regenerated on every build
         \\
     );
-    for (day_entries) |entry| {
+    for (day_entries.items) |entry| {
         try w.print("const day{s} = @import(\"days/{s}\");\n", .{ entry.num_str, entry.filename });
     }
     try w.writeByte('\n');
@@ -187,7 +191,7 @@ fn makeRegistryModule(
         \\pub const days = [_]Day{
     );
     try w.writeByte('\n');
-    for (day_entries) |entry| {
+    for (day_entries.items) |entry| {
         try w.print(
             "    .{{ .number = {d}, .part1 = day{s}.part1, .part2 = day{s}.part2 }},\n",
             .{ entry.num, entry.num_str, entry.num_str },
@@ -195,11 +199,4 @@ fn makeRegistryModule(
     }
     try w.writeAll("};\n");
     try w.flush();
-
-    return b.addModule("days_registry", .{
-        .root_source_file = b.path("src/days_registry.zig"),
-        .target = target,
-        .optimize = optimize,
-        .imports = &.{.{ .name = "aoc", .module = aoc_mod }},
-    });
 }
